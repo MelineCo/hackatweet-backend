@@ -6,6 +6,7 @@ const tweetSchema = mongoose.Schema({
  tweet: String,
  creationDate: Date,
  like: Number,
+ imgSrc: String,
  likers : [{ type: mongoose.Schema.Types.ObjectId, ref: 'users' }]
 });
 
