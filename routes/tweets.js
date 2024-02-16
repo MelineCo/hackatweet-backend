@@ -32,33 +32,45 @@ router.post('/new', function (req, res, next) {
 });
 
 /* UPDATE tweet */
-router.put('/:id/like', function (req, res, next) {
-    let userID
-    User.findOne({ token : req.body.token }).then(data => {
-        if(data){
+router.put('/like/:id', function (req, res, next) {
+    let userID;
+    let isAlreadyLiked = false;
+    User.findOne({ token: req.body.token }).then(data => {
+        if (data) {
             // On récupère l'ObjectID de l'utilisateur qui a appuyé sur le coeur
             userID = data._id;
-            // Selon si l'utilisateur a liké ou unliké
-            if (req.body.action === 'like') {
-                Tweet.updateOne({ _id: req.params.id },  { $inc: { like: +1 },$push: { likers: userID } }).then(data => {
-                    if (data) {
-                        res.json({ result: true, data: data, userID: userID});
+
+            // On teste si l'utilisateur a déjà liké le tweet
+            Tweet.findOne({ _id: req.params.id })
+                // .populate('likers')
+                .then(data => {
+                    console.log(data)
+                    if (data.likers.includes(userID)) {
+                        isAlreadyLiked = true;
                     } else {
-                        res.json({ result: false, error: 'Tweet non trouvé' });
+                        isAlreadyLiked = false;
                     }
-                });
-        
-            } else if(req.body.action === 'unlike'){
-                Tweet.updateOne({ _id: req.params.id }, { $inc: { like: -1 }, $pull: { likers: userID }}).then(data => {
-                    if (data) {
-                        res.json({ result: true, data: data, userID: userID });
+
+                    // Selon si l'utilisateur a liké ou unliké
+                    if (!isAlreadyLiked) {
+                        Tweet.updateOne({ _id: req.params.id }, { $inc: { like: +1 }, $push: { likers: userID } }).then(data => {
+                            if (data) {
+                                res.json({ result: true, data: data, userID: userID });
+                            } else {
+                                res.json({ result: false, error: 'Tweet non trouvé' });
+                            }
+                        });
                     } else {
-                        res.json({ result: false, error: 'Tweet non trouvé' });
+                        Tweet.updateOne({ _id: req.params.id }, { $inc: { like: -1 }, $pull: { likers: userID } }).then(data => {
+                            if (data) {
+                                res.json({ result: true, data: data, userID: userID });
+                            } else {
+                                res.json({ result: false, error: 'Tweet non trouvé' });
+                            }
+                        });
                     }
-                });
-            } else {
-                res.json({ result: false, error: 'Action invalide' });
-            }
+
+                })
 
         } else {
             res.json({ result: false, error: "Erreur lors de la récupération de l'ID utilisateur" });
@@ -71,13 +83,13 @@ router.delete('/:id', function (req, res, next) {
     console.log(req.params.id)
     Tweet.deleteOne({ _id: req.params.id }).then(() => {
         Tweet.find().then(data => {
-            if(data){
+            if (data) {
                 res.json({ result: true, data: data });
             } else {
-                res.json({ result: false, error : 'Tweet not found' });
+                res.json({ result: false, error: 'Tweet not found' });
             }
         });
-       });
+    });
 });
 
 module.exports = router;
