@@ -55,7 +55,7 @@ router.put('/like/:id', function (req, res, next) {
                     if (!isAlreadyLiked) {
                         Tweet.updateOne({ _id: req.params.id }, { $inc: { like: +1 }, $push: { likers: userID } }).then(data => {
                             if (data) {
-                                res.json({ result: true, data: data, userID: userID });
+                                res.json({ result: true, data: data, userID: userID, isLiked : true });
                             } else {
                                 res.json({ result: false, error: 'Tweet non trouvé' });
                             }
@@ -63,7 +63,7 @@ router.put('/like/:id', function (req, res, next) {
                     } else {
                         Tweet.updateOne({ _id: req.params.id }, { $inc: { like: -1 }, $pull: { likers: userID } }).then(data => {
                             if (data) {
-                                res.json({ result: true, data: data, userID: userID });
+                                res.json({ result: true, data: data, userID: userID, isLiked : false });
                             } else {
                                 res.json({ result: false, error: 'Tweet non trouvé' });
                             }
